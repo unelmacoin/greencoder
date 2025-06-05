@@ -1,0 +1,94 @@
+{
+  "name": "green-coder",
+  "displayName": "Green Coder: Code Sustainability Optimizer",
+  "description": "AI-powered extension to analyze and optimize code for energy efficiency and sustainability",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "icon": "images/icon.png",
+  "categories": [
+    "Programming Languages",
+    "Linters",
+    "Machine Learning"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/green-coder"
+  },
+  "homepage": "https://github.com/yourusername/green-coder#readme",
+  "bugs": {
+    "url": "https://github.com/yourusername/green-coder/issues"
+  },
+  "keywords": [
+    "sustainability",
+    "energy efficiency",
+    "code optimization",
+    "green coding",
+    "performance",
+    "javascript",
+    "typescript",
+    "python"
+  ],
+  "galleryBanner": {
+    "color": "#4CAF50",
+    "theme": "dark"
+  },
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "code-sustainability-optimizer.analyzeFile",
+        "title": "Analyze Current File for Sustainability"
+      },
+      {
+        "command": "code-sustainability-optimizer.analyzeWorkspace",
+        "title": "Analyze Workspace for Sustainability"
+      }
+    ],
+    "configuration": {
+      "title": "Code Sustainability Optimizer",
+      "properties": {
+        "codeSustainabilityOptimizer.enableRealTimeAnalysis": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable real-time analysis of code for sustainability"
+        },
+        "codeSustainabilityOptimizer.analysisLevel": {
+          "type": "string",
+          "enum": ["basic", "standard", "advanced"],
+          "default": "standard",
+          "description": "Level of analysis to perform"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "node ./out/test/runTest.js"
+  },
+  "devDependencies": {
+    "@types/glob": "^7.1.3",
+    "@types/mocha": "^10.0.6",
+    "@types/node": "16.x",
+    "@types/vscode": "^1.90.0",
+    "@typescript-eslint/eslint-plugin": "^5.61.0",
+    "@typescript-eslint/parser": "^5.61.0",
+    "eslint": "^8.44.0",
+    "glob": "^8.1.0",
+    "mocha": "^10.2.0",
+    "typescript": "^4.9.5",
+    "@vscode/test-electron": "^2.3.8"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^8.1.0"
+  }
+}
