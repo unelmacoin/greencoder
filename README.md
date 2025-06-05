@@ -1,14 +1,14 @@
 # Green Coder: Code Sustainability Optimizer
 
-[![Version](https://vsmarketplacebadge.apphb.com/version/your-publisher-name.green-coder.svg)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.green-coder)
-[![Installs](https://vsmarketplacebadge.apphb.com/installs/your-publisher-name.green-coder.svg)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.green-coder)
-[![Rating](https://vsmarketplacebadge.apphb.com/rating/your-publisher-name.green-coder.svg)](https://marketplace.visualstudio.com/items?itemName=your-publisher-name.green-coder)
+[![Version](https://vsmarketplacebadge.apphb.com/version/unelmaplatforms.greencoder.png)](https://marketplace.visualstudio.com/items?itemName=unelmaplatforms.greencoder)
+[![Installs](https://vsmarketplacebadge.apphb.com/installs/unelmaplatforms.greencoder.png)](https://marketplace.visualstudio.com/items?itemName=unelmaplatforms.greencoder)
+[![Rating](https://vsmarketplacebadge.apphb.com/rating/unelmaplatforms.greencoder.png)](https://marketplace.visualstudio.com/items?itemName=unelmaplatforms.greencoder)
 
 An AI-powered VS Code extension that helps you write more sustainable and energy-efficient code by analyzing your code for performance and environmental impact.
 
 A VS Code extension that helps developers write more sustainable and energy-efficient code by analyzing their code for performance and environmental impact.
 
-![Green Coder in Action](images/logo.svg)
+![Green Coder Logo](images/icon.png)
 
 ## 🌱 Why Green Coder?
 

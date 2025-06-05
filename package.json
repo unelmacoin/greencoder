@@ -3,7 +3,7 @@
   "displayName": "Green Coder: Code Sustainability Optimizer",
   "description": "AI-powered extension to analyze and optimize code for energy efficiency and sustainability",
   "version": "0.0.1",
-  "publisher": "your-publisher-name",
+  "publisher": "unelmaplatforms",
   "icon": "images/icon.png",
   "categories": [
     "Programming Languages",
@@ -12,11 +12,11 @@
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/green-coder"
+    "url": "https://github.com/unelmacoin/greencoder"
   },
-  "homepage": "https://github.com/yourusername/green-coder#readme",
+  "homepage": "https://github.com/unelmacoin/greencoder#readme",
   "bugs": {
-    "url": "https://github.com/yourusername/green-coder/issues"
+    "url": "https://github.com/unelmacoin/greencoder/issues"
   },
   "keywords": [
     "sustainability",
