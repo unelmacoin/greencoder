@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
-import { AnalysisResult, CodeIssue, Suggestion } from '../extension';
-import { LanguageAnalyzer } from './languages/languageAnalyzer';
-import { JavaScriptAnalyzer } from './languages/javascript';
+import { BaseLanguageAnalyzer } from './languages/templateAnalyzer';
+import { TypeScriptAnalyzer } from './languages/typescriptAnalyzer';
 import { PythonAnalyzer } from './languages/python';
+import { AnalysisResult } from './types';
 
 // Enable debug logging
 const DEBUG = true;
@@ -12,8 +12,15 @@ const log = (message: string, data?: any) => {
     }
 };
 
+// Log environment status
+log('Environment status:', {
+    NODE_ENV: process.env.NODE_ENV,
+    CWD: process.cwd(),
+    WORKSPACE_FOLDERS: vscode.workspace.workspaceFolders?.map(f => f.uri.fsPath) || 'none'
+});
+
 export class SustainabilityAnalyzer {
-    private analyzers: Map<string, LanguageAnalyzer> = new Map();
+    private analyzers: Map<string, BaseLanguageAnalyzer> = new Map();
     private diagnostics: vscode.DiagnosticCollection;
 
     constructor() {
@@ -23,10 +30,44 @@ export class SustainabilityAnalyzer {
 
     private initializeAnalyzers(): void {
         // Register language analyzers
-        this.analyzers.set('javascript', new JavaScriptAnalyzer());
-        this.analyzers.set('typescript', new JavaScriptAnalyzer()); // Reuse JS analyzer for TS
+        // Use TypeScript analyzer for both JS and TS
+        this.analyzers.set('typescript', new TypeScriptAnalyzer());
         this.analyzers.set('python', new PythonAnalyzer());
         // Add more language analyzers here
+    }
+
+    private updateDiagnostics(document: vscode.TextDocument, issues: AnalysisResult['issues']): void {
+        const diagnostics: vscode.Diagnostic[] = [];
+
+        for (const issue of issues) {
+            // Ensure line is within document bounds
+            const line = Math.max(0, Math.min(issue.line - 1, document.lineCount - 1));
+            const lineText = document.lineAt(line).text;
+            const column = Math.max(0, Math.min(issue.column - 1, lineText.length));
+            const range = new vscode.Range(
+                line,
+                column,
+                line,
+                Math.min(column + 10, lineText.length) // Don't go beyond line end
+            );
+
+            const severityMap = {
+                'high': vscode.DiagnosticSeverity.Error,
+                'medium': vscode.DiagnosticSeverity.Warning,
+                'low': vscode.DiagnosticSeverity.Information
+            };
+
+            const diagnostic = new vscode.Diagnostic(
+                range,
+                issue.message,
+                severityMap[issue.severity] || vscode.DiagnosticSeverity.Information
+            );
+            diagnostic.code = issue.code;
+            diagnostic.source = 'Code Sustainability';
+            diagnostics.push(diagnostic);
+        }
+
+        this.diagnostics.set(document.uri, diagnostics);
     }
 
     public async analyzeDocument(document: vscode.TextDocument): Promise<void> {
@@ -47,51 +88,32 @@ export class SustainabilityAnalyzer {
             }
 
             const text = document.getText();
+            
+            // Run local analysis
+            log('Running analysis...');
             const result = await analyzer.analyze(text);
             
-            // Convert our issues to VS Code diagnostics
-            const diagnostics: vscode.Diagnostic[] = result.issues.map(issue => {
-                const range = new vscode.Range(
-                    issue.line - 1,
-                    issue.column - 1,
-                    (issue.endLine || issue.line) - 1,
-                    issue.endColumn || issue.column
-                );
-
-                const severityMap = {
-                    'high': vscode.DiagnosticSeverity.Error,
-                    'medium': vscode.DiagnosticSeverity.Warning,
-                    'low': vscode.DiagnosticSeverity.Information
-                };
-
-                const diagnostic = new vscode.Diagnostic(
-                    range,
-                    issue.message,
-                    severityMap[issue.severity] || vscode.DiagnosticSeverity.Information
-                );
-                diagnostic.code = issue.code;
-                diagnostic.source = 'Code Sustainability';
-                return diagnostic;
-            });
-
-            this.diagnostics.set(document.uri, diagnostics);
-
-            // Show the result in the status bar
+            // Update diagnostics
+            this.updateDiagnostics(document, result.issues);
+            
+            // Update status bar with the score
             const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
             statusBar.text = `$(symbol-color) Green Score: ${result.score.toFixed(0)}%`;
             statusBar.show();
-
-            // Show suggestions as information messages
-            if (result.suggestions.length > 0) {
+            
+            // Show notification with results
+            if (result.issues.length > 0) {
                 const showSuggestions = 'Show Suggestions';
                 vscode.window.showInformationMessage(
-                    `Found ${result.suggestions.length} optimization suggestions`,
+                    `Found ${result.issues.length} potential issues in your code`,
                     showSuggestions
                 ).then(selection => {
                     if (selection === showSuggestions) {
                         this.showSuggestions(result.suggestions);
                     }
                 });
+            } else {
+                vscode.window.showInformationMessage('No issues found. Your code looks good!');
             }
 
         } catch (error) {
@@ -106,7 +128,26 @@ export class SustainabilityAnalyzer {
         vscode.window.showInformationMessage('Workspace analysis is not yet implemented');
     }
 
-    private showSuggestions(suggestions: Suggestion[]): void {
+    private showSuggestions(suggestions: AnalysisResult['suggestions']): void {
+        const items = suggestions.map(suggestion => ({
+            label: suggestion.message,
+            description: suggestion.code,
+            detail: suggestion.explanation,
+            suggestion
+        }));
+
+        vscode.window.showQuickPick(items, {
+            placeHolder: 'Select a suggestion to see details',
+            matchOnDescription: true,
+            matchOnDetail: true
+        }).then(selected => {
+            if (selected) {
+                this.showSuggestionDetails(selected.suggestion);
+            }
+        });
+    }
+
+    private showSuggestionDetails(suggestion: AnalysisResult['suggestions'][0]): void {
         const panel = vscode.window.createWebviewPanel(
             'sustainabilitySuggestions',
             'Sustainability Suggestions',
@@ -114,44 +155,85 @@ export class SustainabilityAnalyzer {
             {}
         );
 
-        const suggestionItems = suggestions.map(suggestion => `
-            <div class="suggestion">
-                <h3>${suggestion.message}</h3>
-                <p>${suggestion.explanation}</p>
-                <pre><code>${suggestion.replacement || suggestion.code}</code></pre>
-                <div class="impact">Estimated Impact: ${suggestion.estimatedImpact}% improvement</div>
-            </div>
-        `).join('');
+        const codeSnippet = suggestion.optimizedCode || suggestion.replacement || suggestion.code;
+        const impactInfo = suggestion.estimatedImpact ? 
+            `<div class="impact">Estimated Impact: ${suggestion.estimatedImpact}% improvement</div>` : '';
+        const lineInfo = suggestion.line ? `<div class="line">Line: ${suggestion.line}</div>` : '';
+        const currentCode = suggestion.currentCode ? 
+            `<div class="current-code">
+                <h4>Current Code:</h4>
+                <pre><code>${suggestion.currentCode}</code></pre>
+            </div>` : '';
 
         panel.webview.html = `
             <!DOCTYPE html>
             <html>
-            <head>
-                <style>
-                    body { font-family: var(--vscode-font-family); padding: 20px; }
-                    .suggestion { 
-                        margin-bottom: 20px; 
-                        padding: 15px; 
-                        border-left: 3px solid #4CAF50;
-                        background-color: rgba(76, 175, 80, 0.1);
-                    }
-                    .impact { 
-                        margin-top: 10px; 
-                        font-weight: bold; 
-                        color: #4CAF50;
-                    }
-                    pre {
-                        background: #f4f4f4;
-                        padding: 10px;
-                        border-radius: 4px;
-                        overflow-x: auto;
-                    }
-                </style>
-            </head>
-            <body>
-                <h1>Sustainability Suggestions</h1>
-                ${suggestionItems}
-            </body>
+                <head>
+                    <style>
+                        body {
+                            font-family: var(--vscode-font-family);
+                            padding: 20px;
+                            color: var(--vscode-foreground);
+                            background-color: var(--vscode-editor-background);
+                        }
+                        .suggestion {
+                            margin-bottom: 20px;
+                            padding: 15px;
+                            background-color: var(--vscode-editor-background);
+                            border-radius: 4px;
+                            border-left: 4px solid var(--vscode-terminal-ansiGreen);
+                        }
+                        h3 {
+                            margin-top: 0;
+                            color: var(--vscode-textLink-foreground);
+                        }
+                        pre {
+                            background-color: var(--vscode-textCodeBlock-background);
+                            padding: 10px;
+                            border-radius: 4px;
+                            overflow-x: auto;
+                            margin: 10px 0;
+                        }
+                        code {
+                            font-family: var(--vscode-editor-font-family);
+                            white-space: pre-wrap;
+                        }
+                        .impact {
+                            margin-top: 15px;
+                            font-weight: bold;
+                            color: var(--vscode-terminal-ansiGreen);
+                        }
+                        .line {
+                            color: var(--vscode-descriptionForeground);
+                            font-size: 0.9em;
+                            margin-bottom: 10px;
+                        }
+                        .current-code {
+                            margin-bottom: 15px;
+                        }
+                        .current-code h4, .optimized-code h4 {
+                            margin: 15px 0 5px 0;
+                            font-size: 0.9em;
+                            color: var(--vscode-descriptionForeground);
+                        }
+                        .optimized-code pre {
+                            border-left: 3px solid var(--vscode-terminal-ansiGreen);
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="suggestion">
+                        <h3>${suggestion.message}</h3>
+                        ${lineInfo}
+                        <p>${suggestion.explanation}</p>
+                        ${currentCode}
+                        <div class="optimized-code">
+                            <h4>Suggested Improvement:</h4>
+                            <pre><code>${codeSnippet}</code></pre>
+                        </div>
+                        ${impactInfo}
+                    </div>
+                </body>
             </html>
         `;
     }

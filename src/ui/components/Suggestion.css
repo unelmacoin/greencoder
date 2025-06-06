@@ -1,0 +1,61 @@
+.suggestion-panel {
+    padding: 10px;
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #f5f5f5;
+}
+
+.suggestion-item {
+    background: white;
+    border-radius: 4px;
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.suggestion-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.message {
+    font-size: 14px;
+    color: #333;
+}
+
+.line-number {
+    font-size: 12px;
+    color: #666;
+}
+
+.suggestion-details {
+    margin-bottom: 10px;
+}
+
+.current-code {
+    color: #e74c3c;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.fix-code {
+    color: #2ecc71;
+    font-family: monospace;
+    font-size: 12px;
+}
+
+.fix-button {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.fix-button:hover {
+    background-color: #2980b9;
+}

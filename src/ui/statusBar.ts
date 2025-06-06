@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { AnalysisResult } from '../extension';
+import { AnalysisResult } from '../analysis/types';
 
 export class StatusBar {
     private statusBarItem: vscode.StatusBarItem;
@@ -49,7 +49,12 @@ export class StatusBar {
     private updateStatusBar(text: string, tooltip?: string, color?: string): void {
         this.statusBarItem.text = text;
         if (tooltip) {
-            this.statusBarItem.tooltip = new vscode.MarkdownString(tooltip);
+            if (tooltip.includes('\n')) {
+                // Use type assertion to handle the MarkdownString case
+                (this.statusBarItem as any).tooltip = new vscode.MarkdownString(tooltip);
+            } else {
+                this.statusBarItem.tooltip = tooltip;
+            }
         }
         if (color) {
             this.statusBarItem.color = new vscode.ThemeColor(`statusBarItem.${color}Foreground`);
