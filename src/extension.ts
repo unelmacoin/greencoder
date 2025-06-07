@@ -77,6 +77,95 @@ let analyzer: SustainabilityAnalyzer | null = null;
 let statusBar: StatusBar | null = null;
 
 export function activate(context: vscode.ExtensionContext) {
+    console.log('Extension "green-coder" is now active!');
+    
+    const analyzer = new SustainabilityAnalyzer();
+    
+    // Store analyzer in context for reuse
+    context.globalState.update('analyzer', analyzer);
+    
+    // Register command to analyze current file
+    const analyzeCommand = vscode.commands.registerCommand('green-coder.analyzeFile', async () => {
+        const editor = vscode.window.activeTextEditor;
+        if (!editor) {
+            vscode.window.showInformationMessage('No active editor');
+            return;
+        }
+        
+        const document = editor.document;
+        const text = document.getText();
+        const languageId = document.languageId;
+        
+        try {
+            const result = await analyzer.analyze(text, languageId);
+            
+            // Show results in a webview or output channel
+            const outputChannel = vscode.window.createOutputChannel('Green Coder');
+            outputChannel.clear();
+            outputChannel.show();
+            
+            if (result.issues.length === 0) {
+                outputChannel.appendLine('✅ No sustainability issues found!');
+            } else {
+                outputChannel.appendLine(`⚠️ Found ${result.issues.length} potential sustainability issues:\n`);
+                
+                result.issues.forEach((issue: { severity: string; message: string; line: number; column: number; code: string }, index: number) => {
+                    outputChannel.appendLine(`${index + 1}. [${issue.severity.toUpperCase()}] ${issue.message}`);
+                    outputChannel.appendLine(`   File: ${document.fileName}:${issue.line}:${issue.column}`);
+                    outputChannel.appendLine(`   Code: ${issue.code}\n`);
+                });
+                
+                if (result.suggestions && result.suggestions.length > 0) {
+                    outputChannel.appendLine('\n💡 Suggestions for improvement:');
+                    result.suggestions.forEach((suggestion: { message: string; currentCode?: string; optimizedCode?: string; explanation?: string }, index: number) => {
+                        outputChannel.appendLine(`\n${index + 1}. ${suggestion.message}`);
+                        if (suggestion.currentCode) {
+                            outputChannel.appendLine(`   Current code: ${suggestion.currentCode}`);
+                        }
+                        if (suggestion.optimizedCode) {
+                            outputChannel.appendLine(`   Suggested fix: ${suggestion.optimizedCode}`);
+                        }
+                        if (suggestion.explanation) {
+                            outputChannel.appendLine(`   Explanation: ${suggestion.explanation}`);
+                        }
+                    });
+                }
+            }
+        } catch (error) {
+            vscode.window.showErrorMessage(`Error analyzing file: ${error}`);
+            console.error('Error analyzing file:', error);
+        }
+    });
+    
+    // Analyze on save
+    const onSave = vscode.workspace.onDidSaveTextDocument(async (document: vscode.TextDocument) => {
+        if (['javascript', 'typescript', 'javascriptreact', 'typescriptreact'].includes(document.languageId)) {
+            const text = document.getText();
+            try {
+                const result = await analyzer.analyze(text, document.languageId);
+                if (result.issues.length > 0) {
+                    vscode.window.showInformationMessage(
+                        `Green Coder: Found ${result.issues.length} potential sustainability issues`,
+                        'View Issues'
+                    ).then(selection => {
+                        if (selection === 'View Issues') {
+                            vscode.commands.executeCommand('green-coder.analyzeFile');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error analyzing on save:', error);
+            }
+        }
+    });
+    
+    context.subscriptions.push(
+        analyzeCommand,
+        onSave,
+        vscode.commands.registerCommand('green-coder.analyzeWorkspace', async () => {
+            // Implementation for analyzing entire workspace
+        })
+    );
     log('Extension is activating...');
     
     // Log extension activation
@@ -88,8 +177,7 @@ export function activate(context: vscode.ExtensionContext) {
         workspaceStoragePath: context.storageUri?.fsPath
     });
 
-    log('Creating analyzer and status bar');
-    analyzer = new SustainabilityAnalyzer();
+    log('Extension activated successfully');
     statusBar = new StatusBar();
     
     // Log configuration

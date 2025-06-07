@@ -24,3 +24,5 @@ README.md
 CHANGELOG.md
 LICENSE
 images/logo.svg
+.env
+**/.env*

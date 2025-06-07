@@ -16,6 +16,6 @@
     "rootDir": "./src",
     "baseUrl": "."
   },
-  "exclude": ["node_modules", ".vscode-test", "out", "sample.js"],
+  "exclude": ["node_modules", ".vscode-test", "out", "examples/sample.js"],
   "include": ["src/**/*"]
 }

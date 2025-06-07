@@ -2,7 +2,7 @@
   "name": "green-coder",
   "displayName": "Green Coder: Code Sustainability Optimizer",
   "description": "AI-powered extension to analyze and optimize code for energy efficiency and sustainability",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "unelmaplatforms",
   "icon": "images/icon.png",
   "categories": [
@@ -43,11 +43,23 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "activationEvents": [
-    "onStartupFinished"
-  ],
+  "activationEvents": [],
   "main": "./out/extension.js",
   "contributes": {
+    "commands": [
+      {
+        "command": "green-coder.analyzeFile",
+        "title": "Analyze Current File for Sustainability"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "green-coder.analyzeFile",
+          "group": "1_modification"
+        }
+      ]
+    },
     "languages": [
       {
         "id": "javascript",
@@ -72,16 +84,7 @@
         "configuration": "./language-configuration.json"
       }
     ],
-    "commands": [
-      {
-        "command": "code-sustainability-optimizer.analyzeFile",
-        "title": "Analyze Current File for Sustainability"
-      },
-      {
-        "command": "code-sustainability-optimizer.analyzeWorkspace",
-        "title": "Analyze Workspace for Sustainability"
-      }
-    ],
+
     "configuration": {
       "title": "Code Sustainability Optimizer",
       "properties": {
@@ -108,21 +111,21 @@
     "compile": "tsc -p ./",
     "lint": "eslint src --ext ts"
   },
+  "dependencies": {
+    "@types/axios": "^0.14.4",
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "vscode-languageclient": "^8.1.0"
+  },
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/node": "^22.15.30",
     "@types/react": "^19.1.6",
+    "@types/vscode": "^1.88.0",
     "@typescript-eslint/eslint-plugin": "^6.15.0",
     "@typescript-eslint/parser": "^6.15.0",
     "eslint": "^8.56.0",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@types/axios": "^0.14.4",
-    "@types/vscode": "^1.88.0",
-    "axios": "^1.6.2",
-    "dotenv": "^16.3.1",
-    "vscode": "^1.1.0",
-    "vscode-languageclient": "^8.1.0"
+    "typescript": "^5.3.3",
+    "vscode": "^1.1.0"
   }
 }

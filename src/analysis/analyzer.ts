@@ -31,9 +31,12 @@ export class SustainabilityAnalyzer {
     private initializeAnalyzers(): void {
         // Register language analyzers
         // Use TypeScript analyzer for both JS and TS
-        this.analyzers.set('typescript', new TypeScriptAnalyzer());
+        const tsAnalyzer = new TypeScriptAnalyzer();
+        this.analyzers.set('typescript', tsAnalyzer);
+        this.analyzers.set('javascript', tsAnalyzer);  // Use same analyzer for JS
+        this.analyzers.set('javascriptreact', tsAnalyzer);  // For JSX files
+        this.analyzers.set('typescriptreact', tsAnalyzer);  // For TSX files
         this.analyzers.set('python', new PythonAnalyzer());
-        // Add more language analyzers here
     }
 
     private updateDiagnostics(document: vscode.TextDocument, issues: AnalysisResult['issues']): void {
@@ -70,6 +73,25 @@ export class SustainabilityAnalyzer {
         this.diagnostics.set(document.uri, diagnostics);
     }
 
+    public async analyze(text: string, languageId: string): Promise<AnalysisResult> {
+        log(`Analyzing ${languageId} code (${text.length} chars)`);
+        
+        const analyzer = this.analyzers.get(languageId);
+        
+        if (!analyzer) {
+            const message = `Code sustainability analysis not supported for ${languageId} files`;
+            log(message);
+            throw new Error(message);
+        }
+        
+        try {
+            return await analyzer.analyze(text);
+        } catch (error) {
+            log('Error during analysis:', error);
+            throw error;
+        }
+    }
+    
     public async analyzeDocument(document: vscode.TextDocument): Promise<void> {
         log(`Analyzing document: ${document.fileName}`);
         log(`Language ID: ${document.languageId}`);
