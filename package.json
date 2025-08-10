@@ -2,7 +2,7 @@
   "name": "green-coder",
   "displayName": "Green Coder: Code Sustainability Optimizer",
   "description": "AI-powered extension to analyze and optimize code for energy efficiency and sustainability",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "publisher": "unelmaplatforms",
   "icon": "images/icon.png",
   "categories": [
@@ -43,19 +43,29 @@
   "engines": {
     "vscode": "^1.90.0"
   },
-  "activationEvents": [],
+  "activationEvents": [
+    "onLanguage:python",
+    "onLanguage:javascript",
+    "onLanguage:typescript",
+    "onLanguage:javascriptreact",
+    "onLanguage:typescriptreact"
+  ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "green-coder.analyzeFile",
+        "command": "code-sustainability-optimizer.analyzeFile",
         "title": "Analyze Current File for Sustainability"
+      },
+      {
+        "command": "code-sustainability-optimizer.analyzeWorkspace",
+        "title": "Analyze Workspace for Sustainability"
       }
     ],
     "menus": {
       "editor/context": [
         {
-          "command": "green-coder.analyzeFile",
+          "command": "code-sustainability-optimizer.analyzeFile",
           "group": "1_modification"
         }
       ]
@@ -82,9 +92,19 @@
           "typescript"
         ],
         "configuration": "./language-configuration.json"
+      },
+      {
+        "id": "python",
+        "extensions": [
+          ".py"
+        ],
+        "aliases": [
+          "Python",
+          "python"
+        ],
+        "configuration": "./language-configuration.json"
       }
     ],
-
     "configuration": {
       "title": "Code Sustainability Optimizer",
       "properties": {
@@ -112,7 +132,6 @@
     "lint": "eslint src --ext ts"
   },
   "dependencies": {
-    "@types/axios": "^0.14.4",
     "axios": "^1.6.2",
     "dotenv": "^16.3.1",
     "vscode-languageclient": "^8.1.0"

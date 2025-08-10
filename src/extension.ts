@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import * as dotenv from 'dotenv';
 import { SustainabilityAnalyzer } from './analysis/analyzer';
 import { StatusBar } from './ui/statusBar';
 
@@ -11,59 +10,6 @@ const log = (message: string, data?: any) => {
         console.log(`[Green Coder] ${message}`, data || '');
     }
 };
-
-// Load environment variables before anything else
-function loadEnvVars() {
-    // Try to load from extension directory first
-    const extensionPath = path.join(__dirname, '..', '..');
-    const envPath = path.join(extensionPath, '.env');
-    
-    log(`Loading environment from: ${envPath}`);
-    
-    try {
-        const result = dotenv.config({ path: envPath });
-        if (result.error) {
-            log('Error loading .env file:', result.error);
-        } else if (result.parsed) {
-            log(`Loaded ${Object.keys(result.parsed).length} environment variables from .env file`);
-            return true;
-        } else {
-            log('No .env file found or it was empty');
-        }
-    } catch (error) {
-        log('Error loading .env file:', error);
-    }
-    
-    // Also try loading from workspace
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders && workspaceFolders.length > 0) {
-        const workspacePath = workspaceFolders[0].uri.fsPath;
-        const workspaceEnvPath = path.join(workspacePath, '.env');
-        
-        if (workspaceEnvPath !== envPath) {  // Don't load the same file twice
-            log(`Trying to load environment from workspace: ${workspaceEnvPath}`);
-            try {
-                const result = dotenv.config({ path: workspaceEnvPath });
-                if (result.error) {
-                    log('Error loading workspace .env file:', result.error);
-                } else if (result.parsed) {
-                    log(`Loaded ${Object.keys(result.parsed).length} environment variables from workspace .env file`);
-                    return true;
-                }
-            } catch (error) {
-                log('Error loading workspace .env file:', error);
-            }
-        }
-    }
-    
-    // Load from process environment as last resort
-    log('Loading environment from process.env');
-    dotenv.config();
-    return true;
-}
-
-// Load environment variables
-loadEnvVars();
 
 // Log environment status
 log('Environment status:', {
@@ -85,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.globalState.update('analyzer', analyzer);
     
     // Register command to analyze current file
-    const analyzeCommand = vscode.commands.registerCommand('green-coder.analyzeFile', async () => {
+    const analyzeCommand = vscode.commands.registerCommand('code-sustainability-optimizer.analyzeFile', async () => {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
             vscode.window.showInformationMessage('No active editor');
@@ -149,7 +95,7 @@ export function activate(context: vscode.ExtensionContext) {
                         'View Issues'
                     ).then(selection => {
                         if (selection === 'View Issues') {
-                            vscode.commands.executeCommand('green-coder.analyzeFile');
+                            vscode.commands.executeCommand('code-sustainability-optimizer.analyzeFile');
                         }
                     });
                 }
@@ -162,7 +108,7 @@ export function activate(context: vscode.ExtensionContext) {
     context.subscriptions.push(
         analyzeCommand,
         onSave,
-        vscode.commands.registerCommand('green-coder.analyzeWorkspace', async () => {
+        vscode.commands.registerCommand('code-sustainability-optimizer.analyzeWorkspace', async () => {
             // Implementation for analyzing entire workspace
         })
     );
@@ -180,25 +126,14 @@ export function activate(context: vscode.ExtensionContext) {
     log('Extension activated successfully');
     statusBar = new StatusBar();
     
+    // Connect status bar with analyzer
+    analyzer.setStatusBar(statusBar);
+    
     // Log configuration
     const config = vscode.workspace.getConfiguration('codeSustainabilityOptimizer');
     log('Configuration:', {
         enableRealTimeAnalysis: config.get('enableRealTimeAnalysis'),
         analysisLevel: config.get('analysisLevel')
-    });
-
-    // Register commands
-    const analyzeFileCommand = vscode.commands.registerCommand('code-sustainability-optimizer.analyzeFile', () => {
-        const editor = vscode.window.activeTextEditor;
-        if (editor) {
-            analyzer?.analyzeDocument(editor.document);
-        }
-    });
-
-    const analyzeWorkspaceCommand = vscode.commands.registerCommand('code-sustainability-optimizer.analyzeWorkspace', () => {
-        if (vscode.workspace.workspaceFolders) {
-            analyzer?.analyzeWorkspace(vscode.workspace.workspaceFolders[0].uri.fsPath);
-        }
     });
 
     // Register text document change listener for real-time analysis
@@ -209,10 +144,24 @@ export function activate(context: vscode.ExtensionContext) {
         }
     });
 
+    // Also analyze when documents are opened
+    const documentOpenListener = vscode.workspace.onDidOpenTextDocument(document => {
+        if (['python', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact'].includes(document.languageId)) {
+            analyzer?.analyzeDocument(document);
+        }
+    });
+
+    // Analyze the currently active document if it exists
+    if (vscode.window.activeTextEditor) {
+        const document = vscode.window.activeTextEditor.document;
+        if (['python', 'javascript', 'typescript', 'javascriptreact', 'typescriptreact'].includes(document.languageId)) {
+            analyzer?.analyzeDocument(document);
+        }
+    }
+
     context.subscriptions.push(
-        analyzeFileCommand,
-        analyzeWorkspaceCommand,
         documentChangeListener,
+        documentOpenListener,
         statusBar
     );
 }

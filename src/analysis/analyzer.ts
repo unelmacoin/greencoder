@@ -22,10 +22,15 @@ log('Environment status:', {
 export class SustainabilityAnalyzer {
     private analyzers: Map<string, BaseLanguageAnalyzer> = new Map();
     private diagnostics: vscode.DiagnosticCollection;
+    private statusBar: any = null; // Will be set from extension
 
     constructor() {
         this.diagnostics = vscode.languages.createDiagnosticCollection('sustainability');
         this.initializeAnalyzers();
+    }
+
+    public setStatusBar(statusBar: any): void {
+        this.statusBar = statusBar;
     }
 
     private initializeAnalyzers(): void {
@@ -119,9 +124,9 @@ export class SustainabilityAnalyzer {
             this.updateDiagnostics(document, result.issues);
             
             // Update status bar with the score
-            const statusBar = vscode.window.createStatusBarItem(vscode.StatusBarAlignment.Right, 100);
-            statusBar.text = `$(symbol-color) Green Score: ${result.score.toFixed(0)}%`;
-            statusBar.show();
+            if (this.statusBar) {
+                this.statusBar.updateWithAnalysis(result);
+            }
             
             // Show notification with results
             if (result.issues.length > 0) {

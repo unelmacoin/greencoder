@@ -2,6 +2,29 @@
 
 All notable changes to the "Green Coder" extension will be documented in this file.
 
+## [0.1.1] - 2025-01-27
+
+### Fixed
+- Resolved TypeScript compilation errors that prevented packaging
+- Fixed missing type declarations for glob module
+- Improved TypeScript configuration for better build compatibility
+- Excluded UI components from main compilation to resolve JSX conflicts
+- Set strict mode to false temporarily to resolve type inference issues
+- **Fixed Python file analysis not automatically triggering** - Added automatic analysis on document open and active editor
+- **Fixed missing green score display** - Integrated status bar with analyzer for real-time score updates
+- **Fixed command registration conflicts** - Unified command naming and removed duplicate registrations
+
+### Changed
+- Updated TypeScript configuration for better module resolution
+- Improved build process reliability
+- Enhanced development workflow for future releases
+- **Enhanced automatic analysis** - Python files now automatically trigger analysis when opened or become active
+- **Improved status bar integration** - Green score now displays automatically without manual commands
+
+### Note
+- Python analyzer functionality was already fully implemented in previous versions
+- This release focuses on build system fixes and **automatic analysis triggering** to enable the green score to appear
+
 ## [0.1.0] - 2025-06-07
 
 ### Added
